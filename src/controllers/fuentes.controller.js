@@ -24,7 +24,8 @@ async function listar(req, res) {
 
     const sql = `
       SELECT id, expediente, nombre_fuente, tipo_captacion, uso_principal,
-             caudal_ls, municipio, vereda, es_vertimiento, lat, lon
+             caudal_ls, municipio, vereda, es_vertimiento,
+             lat::float AS lat, lon::float AS lon
       FROM fuentes_hidricas
       ${where}
       ORDER BY nombre_fuente
@@ -59,7 +60,8 @@ async function buscar(req, res) {
       return res.status(400).json({ error: 'Query "q" must be at least 2 characters' });
     }
     const result = await pool.query(
-      `SELECT id, nombre_fuente, tipo_captacion, uso_principal, vereda, lat, lon
+      `SELECT id, nombre_fuente, tipo_captacion, uso_principal, vereda,
+              lat::float AS lat, lon::float AS lon
        FROM fuentes_hidricas
        WHERE nombre_fuente ILIKE $1
        ORDER BY nombre_fuente
@@ -80,7 +82,8 @@ async function detalle(req, res) {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      `SELECT * FROM fuentes_hidricas WHERE id = $1`,
+      `SELECT *, lat::float AS lat, lon::float AS lon FROM fuentes_hidricas WHERE id = $1`,
+
       [id]
     );
     if (result.rows.length === 0) {
