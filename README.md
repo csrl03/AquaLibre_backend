@@ -18,6 +18,8 @@ REST API para la app móvil AquaLibre, sistema de gestión de recursos hídricos
 | GET | `/api/fuentes/buscar?q=` | Búsqueda por nombre de fuente |
 | GET | `/api/fuentes/:id` | Detalle de una fuente |
 | GET | `/api/fuentes/:id/reportes` | Reportes asociados a una fuente |
+| GET | `/api/estaciones` | Lista de estaciones hidrometeorológicas |
+| GET | `/api/estaciones/:id` | Detalle completo de una estación |
 | POST | `/api/reportes` | Registrar reporte de uso hídrico |
 | GET | `/api/capas/:nombre` | GeoJSON de capa SIG (municipio, drenajes, veredas) |
 | GET | `/api/contenido` | Contenido educativo |

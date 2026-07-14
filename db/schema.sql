@@ -35,6 +35,24 @@ CREATE INDEX IF NOT EXISTS idx_fuentes_tipo         ON fuentes_hidricas (tipo_ca
 CREATE INDEX IF NOT EXISTS idx_fuentes_vertimiento  ON fuentes_hidricas (es_vertimiento);
 
 -- ────────────────────────────────────────────────────────────────────────────
+-- estaciones_hidrometeorologicas
+-- ────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS estaciones_hidrometeorologicas (
+    id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    codigo_estacion  VARCHAR(30) UNIQUE NOT NULL,
+    nombre           VARCHAR(255) NOT NULL,
+    lat              DECIMAL(10, 7) NOT NULL,
+    lon              DECIMAL(10, 7) NOT NULL,
+    metadatos        JSONB NOT NULL DEFAULT '{}'::jsonb,
+    variables        JSONB NOT NULL DEFAULT '{}'::jsonb,
+    fuente_origen    VARCHAR(255) NOT NULL DEFAULT 'reporte_estaciones.json',
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_estaciones_nombre ON estaciones_hidrometeorologicas (nombre);
+CREATE INDEX IF NOT EXISTS idx_estaciones_lat_lon ON estaciones_hidrometeorologicas (lat, lon);
+
+-- ────────────────────────────────────────────────────────────────────────────
 -- reportes_uso
 -- ────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS reportes_uso (

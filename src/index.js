@@ -4,6 +4,7 @@ const cors        = require('cors');
 const compression = require('compression');
 
 const fuentesRouter   = require('./routes/fuentes');
+const estacionesRouter = require('./routes/estaciones');
 const reportesRouter  = require('./routes/reportes');
 const capasRouter     = require('./routes/capas');
 const contenidoRouter = require('./routes/contenido');
@@ -29,6 +30,7 @@ app.use(express.json({ limit: '100kb' }));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/fuentes',   fuentesRouter);
+app.use('/api/estaciones', estacionesRouter);
 app.use('/api/reportes',  reportesRouter);
 app.use('/api/capas',     capasRouter);
 app.use('/api/contenido', contenidoRouter);
