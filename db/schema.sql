@@ -60,14 +60,46 @@ CREATE TABLE IF NOT EXISTS reportes_uso (
     fuente_id     UUID NOT NULL REFERENCES fuentes_hidricas(id) ON DELETE CASCADE,
     nombre_usuario VARCHAR(255),
     actividad     TEXT NOT NULL,
+    actividades   JSONB NOT NULL DEFAULT '[]'::jsonb,
     cantidad_agua DECIMAL(12, 4),
     unidad_agua   VARCHAR(20) DEFAULT 'L/s',
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     campos_extra  JSONB
 );
 
+-- Compatibilidad con instalaciones creadas antes de la selección múltiple.
+ALTER TABLE reportes_uso
+    ADD COLUMN IF NOT EXISTS actividades JSONB;
+
+UPDATE reportes_uso
+SET actividades = jsonb_build_array(actividad)
+WHERE actividades IS NULL AND actividad IS NOT NULL;
+
+UPDATE reportes_uso
+SET actividades = '[]'::jsonb
+WHERE actividades IS NULL;
+
+ALTER TABLE reportes_uso
+    ALTER COLUMN actividades SET DEFAULT '[]'::jsonb,
+    ALTER COLUMN actividades SET NOT NULL;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'reportes_actividades_array_check'
+          AND conrelid = 'reportes_uso'::regclass
+    ) THEN
+        ALTER TABLE reportes_uso
+            ADD CONSTRAINT reportes_actividades_array_check
+            CHECK (jsonb_typeof(actividades) = 'array');
+    END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_reportes_fuente     ON reportes_uso (fuente_id);
 CREATE INDEX IF NOT EXISTS idx_reportes_created_at ON reportes_uso (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reportes_actividades ON reportes_uso USING GIN (actividades);
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- capas_geo

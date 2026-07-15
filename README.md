@@ -41,6 +41,59 @@ Ver `.env.example` para la lista completa. Las variables requeridas son:
 - `PORT` — puerto del servidor (default: 3000)
 - `CORS_ORIGINS` — orígenes permitidos separados por coma (usar `*` en desarrollo)
 
+### Cuerpo de `POST /api/reportes`
+
+El campo `actividades` es obligatorio y recibe una o varias actividades:
+
+```json
+{
+	"fuente_id": "uuid",
+	"nombre_usuario": "Juan Morales",
+	"actividades": ["Consumo doméstico", "Demanda pecuario"],
+	"campos_extra": {
+		"actividades": {
+			"Consumo doméstico": {
+				"unidad_medida": "L/Día",
+				"numero_usuarios": 4,
+				"dotacion_bruta": 171.43,
+				"demanda_hidrica_domestica": 685.71
+			},
+			"Demanda pecuario": {
+				"unidad_medida": "L/día",
+				"animales": [
+					{
+						"especie": "Vacas lecheras",
+						"cantidad": 3,
+						"consumo_promedio_diario": 75,
+						"consumo_estimado_diario": 225
+					},
+					{
+						"especie": "Perros",
+						"cantidad": 2,
+						"peso_kg": 12,
+						"consumo_promedio_diario": 0.06,
+						"consumo_estimado_diario": 1.44
+					}
+				],
+				"demanda_pecuaria": 226.44
+			}
+		}
+	}
+}
+```
+
+La columna `actividad` conserva un resumen textual separado por comas para
+compatibilidad, mientras `actividades` conserva el arreglo canónico. La
+cantidad de agua ya no se solicita en el formulario general; cada actividad
+guarda sus propios resultados y unidad dentro de `campos_extra.actividades`.
+
+Para `Demanda uso agricola`, la app selecciona la estación más cercana a la
+fuente mediante sus coordenadas y usa directamente su promedio de
+`VALORES TOTALES DE EVAPORACIÓN (mm)` como `ET0`. El listado de estaciones
+incluye `et0` y `et0_periodo` para evitar consultas adicionales. Los cultivos
+guardan `area_ha`, `kc_maximo`, `kc_promedio`, `kc_operativo` y el estado del
+cálculo; si falta `Kc`, el formulario se guarda con cálculo pendiente.
+
 ## Despliegue (Railway)
 
 1. Conectar este repositorio en Railway como nuevo servicio

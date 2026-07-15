@@ -9,6 +9,8 @@ async function listar(_req, res) {
     const result = await pool.query(`
       SELECT id, codigo_estacion, nombre,
              lat::float AS lat, lon::float AS lon,
+              NULLIF(BTRIM(variables -> 'VALORES TOTALES DE EVAPORACIÓN (mm)' ->> 'Promedio'), '')::double precision AS et0,
+              NULLIF(BTRIM(variables -> 'VALORES TOTALES DE EVAPORACIÓN (mm)' ->> 'Periodo'), '') AS et0_periodo,
              TRUE AS es_estacion
       FROM estaciones_hidrometeorologicas
       ORDER BY nombre, codigo_estacion

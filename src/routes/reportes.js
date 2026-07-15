@@ -12,7 +12,8 @@ router.post(
   [
     body('fuente_id').isUUID(),
     body('nombre_usuario').optional().isString().trim().isLength({ max: 255 }),
-    body('actividad').isString().trim().isLength({ min: 3, max: 1000 }),
+    body('actividades').isArray({ min: 1, max: 7 }),
+    body('actividades.*').isString().trim().isLength({ min: 3, max: 1000 }),
     body('cantidad_agua').optional().isFloat({ min: 0 }),
     body('unidad_agua').optional().isString().trim().isLength({ max: 20 }),
     body('campos_extra').optional().isObject(),

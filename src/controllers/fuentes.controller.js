@@ -103,7 +103,7 @@ async function reportesPorFuente(req, res) {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      `SELECT id, nombre_usuario, actividad, cantidad_agua, unidad_agua, created_at
+      `SELECT id, nombre_usuario, actividad, actividades, cantidad_agua, unidad_agua, created_at
        FROM reportes_uso
        WHERE fuente_id = $1
        ORDER BY created_at DESC
