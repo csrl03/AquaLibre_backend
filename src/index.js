@@ -19,7 +19,7 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '*')
 
 app.use(cors({
   origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'DELETE'],
 }));
 
 // ── Compression (gzip) ──────────────────────────────────────────────────────

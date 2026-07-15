@@ -21,6 +21,8 @@ REST API para la app móvil AquaLibre, sistema de gestión de recursos hídricos
 | GET | `/api/estaciones` | Lista de estaciones hidrometeorológicas |
 | GET | `/api/estaciones/:id` | Detalle completo de una estación |
 | POST | `/api/reportes` | Registrar reporte de uso hídrico |
+| GET | `/api/reportes?cliente_id=` | Listar reportes asociados a una instalación anónima |
+| DELETE | `/api/reportes/:id?cliente_id=` | Eliminar un reporte propio de la instalación |
 | GET | `/api/capas/:nombre` | GeoJSON de capa SIG (municipio, drenajes, veredas) |
 | GET | `/api/contenido` | Contenido educativo |
 
@@ -48,6 +50,8 @@ El campo `actividades` es obligatorio y recibe una o varias actividades:
 ```json
 {
 	"fuente_id": "uuid",
+	"cliente_id": "id-anonimo-del-dispositivo",
+	"cliente_reporte_id": "id-unico-del-reporte",
 	"nombre_usuario": "Juan Morales",
 	"actividades": ["Consumo doméstico", "Demanda pecuario"],
 	"campos_extra": {
@@ -76,10 +80,29 @@ El campo `actividades` es obligatorio y recibe una o varias actividades:
 					}
 				],
 				"demanda_pecuaria": 226.44
+			},
+			"Demanda industrial": {
+				"unidad_medida": "L/día",
+				"consumo_industrial_l_dia": 1200,
+				"zona": "Urbana",
+				"sistema_captacion": "Acueducto",
+				"realiza_vertimientos": false
 			}
 		}
 	}
 }
+```
+
+`cliente_id` identifica de forma anónima la instalación y
+`cliente_reporte_id` hace idempotentes los reintentos. Si se repite la misma
+pareja, el POST devuelve el reporte existente en lugar de crear un duplicado.
+
+## Migración de Mis Reportes
+
+En bases existentes, ejecutar una vez:
+
+```bash
+psql "postgresql://USER:PASSWORD@HOST:PORT/DB_NAME" -f "D:\UDC 2026-1\CHAMBA\APP_HIDRICA\aqualib\api\db\migrations\003_reportes_cliente_id.sql"
 ```
 
 La columna `actividad` conserva un resumen textual separado por comas para
@@ -93,6 +116,10 @@ fuente mediante sus coordenadas y usa directamente su promedio de
 incluye `et0` y `et0_periodo` para evitar consultas adicionales. Los cultivos
 guardan `area_ha`, `kc_maximo`, `kc_promedio`, `kc_operativo` y el estado del
 cálculo; si falta `Kc`, el formulario se guarda con cálculo pendiente.
+
+Para `Demanda industrial`, el formulario solicita únicamente el consumo diario
+en `L/día` además de los datos comunes de la actividad, y lo guarda como
+`consumo_industrial_l_dia`.
 
 ## Despliegue (Railway)
 
