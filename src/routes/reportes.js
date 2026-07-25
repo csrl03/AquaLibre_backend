@@ -2,12 +2,14 @@ const { Router } = require('express');
 const { body, param, query } = require('express-validator');
 const { validate } = require('../middleware/validate');
 const { reportesLimiter } = require('../middleware/rateLimiter');
+const { authToken } = require('../middleware/authToken');
 const ctrl = require('../controllers/reportes.controller');
 
 const router = Router();
 
 router.get(
   '/',
+  authToken,
   [query('cliente_id').isString().trim().isLength({ min: 10, max: 100 })],
   validate,
   ctrl.listarPorCliente
@@ -17,7 +19,7 @@ router.post(
   '/',
   reportesLimiter,
   [
-    body('fuente_id').isUUID(),
+    body('fuente_id').optional({ checkFalsy: true }).isUUID(),
     body('nombre_usuario').optional().isString().trim().isLength({ max: 255 }),
     body('actividades').isArray({ min: 1, max: 7 }),
     body('actividades.*').isString().trim().isLength({ min: 3, max: 1000 }),
@@ -33,6 +35,7 @@ router.post(
 
 router.delete(
   '/:id',
+  authToken,
   [
     param('id').isUUID(),
     query('cliente_id').isString().trim().isLength({ min: 10, max: 100 }),

@@ -25,6 +25,10 @@ async function crear(req, res) {
       return res.status(400).json({ error: 'At least one activity is required' });
     }
 
+    // Accept reports without fuente_id (GPS/manual location-based reports).
+    // Location data is stored in campos_extra.ubicacion.
+    const fuenteId = fuente_id || null;
+
     const actividad = actividadesNormalizadas.join(', ');
 
     if ((cliente_id && !cliente_reporte_id) || (!cliente_id && cliente_reporte_id)) {
@@ -53,7 +57,7 @@ async function crear(req, res) {
                  cliente_reporte_id, cantidad_agua, unidad_agua, campos_extra, created_at`,
       [
         id,
-        fuente_id,
+        fuenteId,
         nombre_usuario ? nombre_usuario.trim().slice(0, 255) : null,
         actividad,
         JSON.stringify(actividadesNormalizadas),
@@ -93,7 +97,7 @@ async function listarPorCliente(req, res) {
               f.nombre_fuente, f.municipio, f.vereda,
               f.lat::float AS lat, f.lon::float AS lon
        FROM reportes_uso r
-       INNER JOIN fuentes_hidricas f ON f.id = r.fuente_id
+       LEFT JOIN fuentes_hidricas f ON f.id = r.fuente_id
        WHERE r.cliente_id = $1
        ORDER BY r.created_at DESC
        LIMIT 200`,

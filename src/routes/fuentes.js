@@ -13,6 +13,16 @@ router.get(
 );
 
 router.get(
+  '/reverse-geocode',
+  [
+    query('lat').isFloat({ min: -90, max: 90 }),
+    query('lon').isFloat({ min: -180, max: 180 }),
+  ],
+  validate,
+  ctrl.reverseGeocode
+);
+
+router.get(
   '/',
   [
     query('page').optional().isInt({ min: 1 }),

@@ -8,6 +8,7 @@ const estacionesRouter = require('./routes/estaciones');
 const reportesRouter  = require('./routes/reportes');
 const capasRouter     = require('./routes/capas');
 const contenidoRouter = require('./routes/contenido');
+const authRouter      = require('./routes/auth');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +30,7 @@ app.use(compression());
 app.use(express.json({ limit: '100kb' }));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
+app.use('/api/auth',      authRouter);
 app.use('/api/fuentes',   fuentesRouter);
 app.use('/api/estaciones', estacionesRouter);
 app.use('/api/reportes',  reportesRouter);

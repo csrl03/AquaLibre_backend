@@ -57,15 +57,21 @@ CREATE INDEX IF NOT EXISTS idx_estaciones_lat_lon ON estaciones_hidrometeorologi
 -- ────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS reportes_uso (
     id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    fuente_id     UUID NOT NULL REFERENCES fuentes_hidricas(id) ON DELETE CASCADE,
+    fuente_id     UUID REFERENCES fuentes_hidricas(id) ON DELETE CASCADE,
     nombre_usuario VARCHAR(255),
     actividad     TEXT NOT NULL,
     actividades   JSONB NOT NULL DEFAULT '[]'::jsonb,
+    cliente_id    VARCHAR(100),
+    cliente_reporte_id VARCHAR(100),
     cantidad_agua DECIMAL(12, 4),
     unidad_agua   VARCHAR(20) DEFAULT 'L/s',
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     campos_extra  JSONB
 );
+
+-- Permite reportes basados en ubicación GPS/manual sin fuente existente.
+ALTER TABLE reportes_uso
+    ALTER COLUMN fuente_id DROP NOT NULL;
 
 -- Compatibilidad con instalaciones creadas antes de la selección múltiple.
 ALTER TABLE reportes_uso
@@ -82,6 +88,10 @@ WHERE actividades IS NULL;
 ALTER TABLE reportes_uso
     ALTER COLUMN actividades SET DEFAULT '[]'::jsonb,
     ALTER COLUMN actividades SET NOT NULL;
+
+ALTER TABLE reportes_uso
+    ADD COLUMN IF NOT EXISTS cliente_id VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS cliente_reporte_id VARCHAR(100);
 
 DO $$
 BEGIN
@@ -100,6 +110,9 @@ END $$;
 CREATE INDEX IF NOT EXISTS idx_reportes_fuente     ON reportes_uso (fuente_id);
 CREATE INDEX IF NOT EXISTS idx_reportes_created_at ON reportes_uso (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_reportes_actividades ON reportes_uso USING GIN (actividades);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_reportes_cliente_reporte
+    ON reportes_uso (cliente_id, cliente_reporte_id)
+    WHERE cliente_id IS NOT NULL AND cliente_reporte_id IS NOT NULL;
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- capas_geo
@@ -129,3 +142,14 @@ CREATE TABLE IF NOT EXISTS contenido_educativo (
 
 CREATE INDEX IF NOT EXISTS idx_contenido_tipo      ON contenido_educativo (tipo);
 CREATE INDEX IF NOT EXISTS idx_contenido_categoria ON contenido_educativo (categoria);
+
+-- ────────────────────────────────────────────────────────────────────────────
+-- cliente_auth — anonymous client authentication (DEF-010 fix)
+-- ────────────────────────────────────────────────────────────────────────────
+-- Stores a SHA-256 hash of the token issued to each anonymous client.
+-- The token is sent in the X-Client-Token header for /api/reportes operations.
+CREATE TABLE IF NOT EXISTS cliente_auth (
+    cliente_id  VARCHAR(100) PRIMARY KEY,
+    token_hash  CHAR(64) NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

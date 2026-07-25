@@ -97,6 +97,63 @@ async function detalle(req, res) {
 }
 
 /**
+ * GET /api/fuentes/reverse-geocode?lat=X&lon=Y
+ * Uses PostGIS ST_Contains on capas_geo (veredas + municipio) to reverse-geocode
+ * a point to its vereda and municipio name from the GIS layers.
+ */
+async function reverseGeocode(req, res) {
+  try {
+    const lat = parseFloat(req.query.lat);
+    const lon = parseFloat(req.query.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)
+        || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+      return res.status(400).json({ error: 'lat and lon must be valid numeric coordinates' });
+    }
+
+    const point = `ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326)`;
+
+    // Query veredas layer — property NOMBRE_VER holds the vereda name
+    const veredaResult = await pool.query(
+      `SELECT feature->'properties'->>'NOMBRE_VER' AS vereda,
+              feature->'properties'->>'NOMB_MPIO'  AS municipio
+       FROM capas_geo,
+            jsonb_array_elements(geojson->'features') AS feature
+       WHERE nombre_capa = 'veredas'
+         AND ST_Contains(
+           ST_GeomFromGeoJSON(feature->'geometry'::text, 4326),
+           ${point}
+         )
+       LIMIT 1`
+    );
+
+    // Query municipio layer — property "nombre" holds the municipality name
+    const municipioResult = await pool.query(
+      `SELECT feature->'properties'->>'nombre' AS municipio
+       FROM capas_geo,
+            jsonb_array_elements(geojson->'features') AS feature
+       WHERE nombre_capa = 'municipio'
+         AND ST_Contains(
+           ST_GeomFromGeoJSON(feature->'geometry'::text, 4326),
+           ${point}
+         )
+       LIMIT 1`
+    );
+
+    const vereda = veredaResult.rows[0]?.vereda || null;
+    const municipio =
+      veredaResult.rows[0]?.municipio
+      || municipioResult.rows[0]?.municipio
+      || null;
+    const nombre = vereda || municipio || null;
+
+    res.json({ nombre, municipio, vereda });
+  } catch (err) {
+    console.error('reverse geocode:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
  * GET /api/fuentes/:id/reportes
  */
 async function reportesPorFuente(req, res) {
@@ -117,4 +174,4 @@ async function reportesPorFuente(req, res) {
   }
 }
 
-module.exports = { listar, buscar, detalle, reportesPorFuente };
+module.exports = { listar, buscar, detalle, reportesPorFuente, reverseGeocode };
