@@ -13,6 +13,10 @@ const authRouter      = require('./routes/auth');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// ── Trust proxy (Railway/load balancer) ──────────────────────────────────────
+// Required for express-rate-limit to read X-Forwarded-For correctly.
+app.set('trust proxy', 1);
+
 // ── CORS ────────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.CORS_ORIGINS || '*')
   .split(',')
@@ -27,7 +31,8 @@ app.use(cors({
 app.use(compression());
 
 // ── Body parsing ─────────────────────────────────────────────────────────────
-app.use(express.json({ limit: '100kb' }));
+// 10 MB limit — reportes con fotos base64 pueden exceder 100 KB.
+app.use(express.json({ limit: '10mb' }));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',      authRouter);

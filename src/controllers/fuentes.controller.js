@@ -113,6 +113,8 @@ async function reverseGeocode(req, res) {
     const point = `ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326)`;
 
     // Query veredas layer — property NOMBRE_VER holds the vereda name
+    // ST_GeomFromGeoJSON accepts only 1 arg (the geojson text);
+    // SRID must be set separately via ST_SetSRID.
     const veredaResult = await pool.query(
       `SELECT feature->'properties'->>'NOMBRE_VER' AS vereda,
               feature->'properties'->>'NOMB_MPIO'  AS municipio
@@ -120,7 +122,7 @@ async function reverseGeocode(req, res) {
             jsonb_array_elements(geojson->'features') AS feature
        WHERE nombre_capa = 'veredas'
          AND ST_Contains(
-           ST_GeomFromGeoJSON(feature->'geometry'::text, 4326),
+           ST_SetSRID(ST_GeomFromGeoJSON(feature->'geometry'::text), 4326),
            ${point}
          )
        LIMIT 1`
@@ -133,7 +135,7 @@ async function reverseGeocode(req, res) {
             jsonb_array_elements(geojson->'features') AS feature
        WHERE nombre_capa = 'municipio'
          AND ST_Contains(
-           ST_GeomFromGeoJSON(feature->'geometry'::text, 4326),
+           ST_SetSRID(ST_GeomFromGeoJSON(feature->'geometry'::text), 4326),
            ${point}
          )
        LIMIT 1`
